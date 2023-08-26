@@ -1,1 +1,1 @@
-console.log("hello world");git remote add origin https://github.com/tu22tu22/tutu-app.git
+console.log("hello world");
