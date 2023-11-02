@@ -43,7 +43,7 @@ function UserInfo(): JSX.Element {
   }, []);
 
   return (
-    <div id="userInfo">
+    <div className="userInfo">
       <h2>User Information</h2>
       {userData ? (
         <>
