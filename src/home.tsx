@@ -1,10 +1,10 @@
-// import ProductList from './products';
+import ProductList from './products';
 
 function Home() {
   return (
     <div className="Home">
       <h1>Home</h1>
-      {/* <ProductList /> */}
+      <ProductList />
     </div>
   );
 }
