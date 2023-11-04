@@ -5,7 +5,7 @@ import App from "./App";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter  basename="https://tu22tu22.github.io/tutu-app">
       <App />
     </BrowserRouter>
   </React.StrictMode>
