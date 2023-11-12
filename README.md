@@ -10,9 +10,6 @@ Currently, two official plugins are available:
 ## Git Flow
 
 ```mermaid
----
-title:
----
 gitGraph TB:
 commit id:"initial"
 branch feature/react-bootcamp
@@ -21,7 +18,6 @@ branch gh-pages
 commit tag: "線上檢視"
 checkout main
 merge feature/react-bootcamp tag: "v1.0.0"
-
 ```
 
 ## Expanding the ESLint configuration
