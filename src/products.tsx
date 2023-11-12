@@ -1,7 +1,8 @@
-import  { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Product {
   title: string;
+  id: number;
   price: number;
   description: string;
   category: {
@@ -12,118 +13,159 @@ interface Product {
   images: string[];
 }
 
-function ProductList() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [title, setTitle] = useState('');
-  const [priceMin, setPriceMin] = useState('');
-  const [priceMax, setPriceMax] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-
-  useEffect(() => {
-    // 获取产品数据并存储在products状态中
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('https://api.escuelajs.co/api/v1/products');
-      const data = await response.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  };
-
-  const createProductListItem = (product: Product) => (
-    <li key={product.title}>
+function createProductListItem(product: Product) {
+  return (
+    <li key={product.id}>
       <h3>{product.title}</h3>
       <p>Price: ${product.price}</p>
       <p>{product.description}</p>
-      <p>Category id: {product.category.id}</p>
+      <p>Category ID: {product.category.id}</p>
       <p>Category name: {product.category.name}</p>
-      <img src={product.category.image} alt={product.category.name} />
+      {/* <img src={product.category.image} alt={product.category.name} />
       <div>
         {product.images.map((image, index) => (
           <img key={index} src={image} alt="Product Image" />
         ))}
-      </div>
+      </div> */}
     </li>
   );
+}
 
-  const filterProducts = () => {
-    let filtered = products;
+function ProductList() {
+  const [originalProductListData, setOriginalProductListData] = useState<Product[]>([]);
+  const [productList, setProductList] = useState<Product[]>([]);
+  const [title, setTitle] = useState('');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [defaultMinPrice, setDefaultMinPrice] = useState<number | undefined>(undefined);
+  const [defaultMaxPrice, setDefaultMaxPrice] = useState<number | undefined>(undefined);
 
-    if (title) {
-      filtered = filtered.filter((product) =>
-        product.title.toLowerCase().includes(title.toLowerCase())
-      );
+
+  useEffect(() => {
+    // 產品列表API
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://api.escuelajs.co/api/v1/products');
+        const data: Product[] = await response.json();
+
+        setOriginalProductListData(data);
+
+        //將API內的價格最大值與最小值，預設顯示在input
+        // const defaultMinPrice = Math.min(...data.map((product) => product.price));
+        // const defaultMaxPrice = Math.max(...data.map((product) => product.price));
+        // setPriceMin(defaultMinPrice.toString());
+        // setPriceMax(defaultMaxPrice.toString());
+
+        const minPrice = Math.min(...data.map((product) => product.price));
+        const maxPrice = Math.max(...data.map((product) => product.price));
+
+        setDefaultMinPrice(minPrice);
+        setDefaultMaxPrice(maxPrice);
+
+        setProductList(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleFilter = () => {
+    const titleValue = title.trim();
+    const priceMinValue = priceMin.trim() || (defaultMinPrice !== undefined ? defaultMinPrice.toString() : '');
+    const priceMaxValue = priceMax.trim() || (defaultMaxPrice !== undefined ? defaultMaxPrice.toString() : '');
+    const categoryIdValue = categoryId.trim();
+
+    // 建構合併篩選條件的API請求
+    let apiUrl = 'https://api.escuelajs.co/api/v1/products/?';
+
+    if (titleValue) {
+      apiUrl += `title=${titleValue}&`;
     }
 
-    if (priceMin) {
-      filtered = filtered.filter((product) => product.price >= parseInt(priceMin));
+    if (priceMinValue) {
+      apiUrl += `price_min=${priceMinValue}&`;
+    } 
+
+    if (priceMaxValue) {
+      apiUrl += `price_max=${priceMaxValue}&`;
     }
 
-    if (priceMax) {
-      filtered = filtered.filter((product) => product.price <= parseInt(priceMax));
+    if (categoryIdValue) {
+      apiUrl += `categoryId=${categoryIdValue}&`;
     }
 
-    if (categoryId) {
-      filtered = filtered.filter((product) => product.category.id === parseInt(categoryId));
-    }
+    // 移除最後一個 '&' 字符
+    apiUrl = apiUrl.slice(0, -1);
 
-    setFilteredProducts(filtered);
+    fetch(apiUrl)
+      .then((response) => response.json())
+      .then((data: Product[]) => {
+        if (data.length === 0) {
+          setProductList([]);
+        } else {
+          setProductList(data);
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        setProductList([]);
+      });
   };
 
-  const clearFilters = () => {
+  const handleClear = () => {
     setTitle('');
     setPriceMin('');
     setPriceMax('');
     setCategoryId('');
-    setFilteredProducts([]);
+    setProductList(originalProductListData);
   };
 
   return (
     <div className='productList'>
       <h2>Product Filter</h2>
-      <label htmlFor="title">Filter by Title:</label>
+      <label htmlFor="title">Title:</label>
       <input
+      id='title'
         type="text"
-        id="title"
-        placeholder="Enter product title"
+        placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
       <label htmlFor="priceMin">Price Min:</label>
       <input
+      id='priceMin'
         type="number"
-        id="priceMin"
-        placeholder="Enter min price"
+        placeholder="Price Min"
         value={priceMin}
         onChange={(e) => setPriceMin(e.target.value)}
       />
       <label htmlFor="priceMax">Price Max:</label>
       <input
+      id='priceMax'
         type="number"
-        id="priceMax"
-        placeholder="Enter max price"
+        placeholder="Price Max"
         value={priceMax}
         onChange={(e) => setPriceMax(e.target.value)}
       />
       <label htmlFor="categoryId">Category ID:</label>
       <input
+      id='categoryId'
         type="number"
-        id="categoryId"
-        placeholder="Enter category ID"
+        placeholder="Category ID"
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
       />
-      <button onClick={filterProducts}>Filter by All Conditions</button>
-      <button onClick={clearFilters}>Clear Filter</button>
+      <button onClick={handleFilter}>Filter</button>
+      <button onClick={handleClear}>Clear</button>
       <ul>
-        {filteredProducts.length > 0
-          ? filteredProducts.map((product) => createProductListItem(product))
-          : products.map((product) => createProductListItem(product))}
+        {productList.length === 0 ? (
+          <li>No products found.</li>
+        ) : (
+          productList.map((product) => createProductListItem(product))
+        )}
       </ul>
     </div>
   );
