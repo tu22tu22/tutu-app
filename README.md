@@ -20,6 +20,8 @@ checkout main
 merge feature/react-bootcamp tag: "v1.0.0"
 ```
 
+![Git Flow](/public/highlight.png)
+
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:

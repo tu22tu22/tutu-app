@@ -21,8 +21,8 @@ function createProductListItem(product: Product) {
       <p>{product.description}</p>
       <p>Category ID: {product.category.id}</p>
       <p>Category name: {product.category.name}</p>
-      {/* <img src={product.category.image} alt={product.category.name} />
-      <div>
+      <img src={product.category.image} alt={product.category.name} />
+      {/* <div>
         {product.images.map((image, index) => (
           <img key={index} src={image} alt="Product Image" />
         ))}
