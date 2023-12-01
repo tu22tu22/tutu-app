@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './index.css'
 
 interface Product {
   title: string;
@@ -40,22 +41,20 @@ function ProductList() {
   const [categoryId, setCategoryId] = useState('');
   const [defaultMinPrice, setDefaultMinPrice] = useState<number | undefined>(undefined);
   const [defaultMaxPrice, setDefaultMaxPrice] = useState<number | undefined>(undefined);
+  const [offset, setOffset] = useState(0);
+  const limit = 10; // 設定每頁的項目數
+  const [currentPage, setCurrentPage] = useState(1);
+  let totalPages = Math.ceil(originalProductListData.length / limit);
 
 
   useEffect(() => {
     // 產品列表API
     const fetchData = async () => {
       try {
-        const response = await fetch('https://api.escuelajs.co/api/v1/products');
+        const response = await fetch(`https://api.escuelajs.co/api/v1/products?offset=${offset}&limit=${limit}`);
         const data: Product[] = await response.json();
 
         setOriginalProductListData(data);
-
-        //將API內的價格最大值與最小值，預設顯示在input
-        // const defaultMinPrice = Math.min(...data.map((product) => product.price));
-        // const defaultMaxPrice = Math.max(...data.map((product) => product.price));
-        // setPriceMin(defaultMinPrice.toString());
-        // setPriceMax(defaultMaxPrice.toString());
 
         const minPrice = Math.min(...data.map((product) => product.price));
         const maxPrice = Math.max(...data.map((product) => product.price));
@@ -70,7 +69,7 @@ function ProductList() {
     };
 
     fetchData();
-  }, []);
+  }, [offset]);
 
   const handleFilter = () => {
     const titleValue = title.trim();
@@ -113,6 +112,12 @@ function ProductList() {
         console.error('Error:', error);
         setProductList([]);
       });
+
+      // 重置為第一頁
+      setCurrentPage(1); 
+
+      // 重置 offset 以獲取篩選結果的第一頁
+      setOffset(0);
   };
 
   const handleClear = () => {
@@ -120,7 +125,42 @@ function ProductList() {
     setPriceMin('');
     setPriceMax('');
     setCategoryId('');
+    setCurrentPage(1);
+    setOffset(0);
     setProductList(originalProductListData);
+  };
+
+  const handleNextPage = () => {
+    setOffset((prevOffset) => {
+      const newOffset = prevOffset + limit;
+      setCurrentPage((prevPage) => Math.min(totalPages, prevPage + 1));
+      return newOffset;
+    });
+  };
+
+  const handlePrevPage = () => {
+    setOffset((prevOffset) => {
+      const newOffset = Math.max(0, prevOffset - limit);
+      setCurrentPage((prevPage) => Math.max(1, prevPage - 1));
+      return newOffset;
+    });
+  };
+
+  const handlePageClick = (page: number) => {
+    setOffset((page - 1) * limit);
+    setCurrentPage(page);
+  };
+
+  const generatePageButtons = () => {
+    const pageButtons = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageButtons.push(
+        <button key={i} onClick={() => handlePageClick(i)} disabled={currentPage === i}>
+          {i}
+        </button>
+      );
+    }
+    return pageButtons;
   };
 
   return (
@@ -160,13 +200,22 @@ function ProductList() {
       />
       <button onClick={handleFilter}>Filter</button>
       <button onClick={handleClear}>Clear</button>
-      <ul>
+      <ol>
         {productList.length === 0 ? (
           <li>No products found.</li>
         ) : (
           productList.map((product) => createProductListItem(product))
         )}
-      </ul>
+      </ol>
+      <div className="pagination">
+        <button onClick={handlePrevPage} disabled={offset === 0}>
+          上一頁
+        </button>
+        {generatePageButtons()}
+        <button onClick={handleNextPage} disabled={productList.length < limit}>
+          下一頁
+        </button>
+      </div>
     </div>
   );
 }
